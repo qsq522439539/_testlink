@@ -4,12 +4,29 @@
 from testlink import TestlinkAPIClient, TestLinkHelper
 from platform import python_version
 import os
+import sys
+import time
+import re
 import testlink
 import collections
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+def readtxt():
+	f = open('config.txt','r')
+	r = f.read()
+	testlink_url = re.findall('testlink_url=(.*)\\n', r)[0]
+	testlink_devkey = re.findall('testlink_devkey=(.*)\\n', r)[0]
+	sheet_name = re.findall('sheet_name=(.*)\\n', r)[0]
+	excel_name = re.findall('excel_name=(.*)', r)[0]
+	f.close()
+	return [testlink_url,testlink_devkey,sheet_name,excel_name]
+	
+	
 class TLDealer:
-	testlink_url='http://192.168.103.114/testlink/lib/api/xmlrpc/v1/xmlrpc.php'
-	testlink_devkey='b3042cb26bec47083ddf3f5693571c05'
+	testlink_url=readtxt()[0]
+	testlink_devkey=readtxt()[1]
 	def __init__(self,url=None, devkey=None):
 		if url:	self.testlink_url = url
 		if devkey: self.testlink_devkey = devkey
@@ -169,13 +186,18 @@ class TLDealer:
 				else:
 					suitesid.append(value['id'])
 					break
+		count = 0.0
+		for suiteid in suitesid:
+			tcs = self.getTestCaseList_inTS(suiteid)
+			count += len(tcs)
+		c = 0.0
 		for suiteid in suitesid:
 			tcs = self.getTestCaseList_inTS(suiteid)
 			for tc in tcs:
-				msg = u'测试目的:'+str(tc['summary'].replace('</p>','\n').replace('<p>',''))+'\n'\
-				      +u'预置条件:'+str(tc['preconditions'].replace('</p>','\n').replace('<p>',''))+'\n'\
-				      +u'测试步骤:'+str(tc['steps'][0]['actions'].replace('</p>','\n').replace('<p>',''))+'\n'\
-				      +u'预期结果:'+str(tc['steps'][0]['expected_results'].replace('</p>','\n').replace('<p>',''))
+				msg =  u'测试目的:'+'\n'+str(tc['summary'].replace('</p>','\n').replace('<p>',''))+'\n'\
+				      +u'预置条件:'+'\n'+str(tc['preconditions'].replace('</p>','\n').replace('<p>',''))+'\n'\
+				      +u'测试步骤:'+'\n'+str(tc['steps'][0]['actions'].replace('</p>','\n').replace('<p>',''))+'\n'\
+				      +u'预期结果:'+'\n'+str(tc['steps'][0]['expected_results'].replace('</p>','\n').replace('<p>',''))
 				keywords = []
 				if tc.has_key('keywords'):
 					for k,v in tc['keywords'].iteritems():
@@ -210,12 +232,17 @@ class TLDealer:
 					execution_type = 'M'
 				customfield = self.getTestCaseCustomFieldDesignValue(tc['external_id'],tc['version'],p['id'])
 				info = [tc['external_id'], tc['name'], suite1name, suite2name, importance, msg, ' ', keywords, execution_type , customfield]
-				print info
+				c += 1
+				rate = c / count
+				rate_num = round(rate * 100,2)
+				r = '\r[rate: %s]' %rate_num
+				sys.stdout.write(r)
+				sys.stdout.flush()
 				allinfo.append(info)
 		return allinfo
 		
 if __name__ == '__main__':
-	mytl = TLDealer()
+	# mytl = TLDealer()
 	#mytl.getTestProjectInfo()
 	#mytl.getTestPlanInfo()
 	#mytl.getTestSuiteInfo()
@@ -234,7 +261,7 @@ if __name__ == '__main__':
 	# mytl.getTestSuiteInfo('932')
 	# mytl._getcaseinfo('S2PJ')
 	# mytl.getTestCaseList_inTS('1094')
-
-
+	# mytl.getTestProjectInfo('S2PJ')
+	readtxt()
 	
 
