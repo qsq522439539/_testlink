@@ -1,7 +1,6 @@
 ﻿testlink_url=http://192.168.103.114/testlink/lib/api/xmlrpc/v1/xmlrpc.php
-
 testlink_devkey=b3042cb26bec47083ddf3f5693571c05
-
+project_name=BST
+author_login=admin
 sheet_name=全部用例
-
-excel_name=V1R2用例
+excel_name=exam7.xls
